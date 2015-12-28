@@ -1,0 +1,52 @@
+#+TITLE: helm-org-contacts – A Helm source for org-contacts
+#+AUTHOR: Titus von der Malsburg
+#+EMAIL: malsburg@posteo.de
+
+This helm source can be used to search entries stored in an org-contacts file.
+
+[[file:screenshot.png]]
+
+The screenshot shows the entries stored in the org-contacts file shown below.  This file was generated from a Vcard file using [[https://gist.github.com/tmalsburg/9747104][a simple python script]].
+
+At this time, there are actions for inserting postal addresses, email addresses, and phone numbers in the buffer where `helm-org-contacts` was called.
+
+#+BEGIN_SRC
+* Forrest Gump
+  :PROPERTIES:
+  :ADDRESS: 100 Waters Edge, 30314 Baytown, LA, United States of America (WORK)
+  :ADDRESS: 42 Plantation St., 30314 Baytown, LA, United States of America (HOME)
+  :PHONE: +1-111-555-1212 (WORK, VOICE)
+  :PHONE: +1-404-555-1212 (HOME, VOICE)
+  :TITLE: Shrimp Man
+  :PHOTO: http://www.example.com/dir_photos/my_photo.gif (GIF)
+  :REV: [2008-04-24 Thu 19:52]
+  :N: Gump;Forrest;Mr.;;
+  :ORG: Bubba Gump Shrimp Co.
+  :LABEL: 100 Waters Edge, Baytown (WORK)
+  :LABEL: 42 Plantation St., Baytown (HOME)
+  :EMAIL: forrestgump@example.com (PREF, INTERNET)
+  :END:
+* Derik Stenerson
+  :PROPERTIES:
+  :PHONE: +1-425-936-5522 (WORK, MSG)
+  :PHONE: +1-425-936-7329 (WORK, FAX)
+  :ADDRESS: One Microsoft Way, 98052-6399 Redmond, WA, USA (WORK, POSTAL, PARCEL)
+  :BDAY: 1963-09-21
+  :N: Stenerson;Derik;;;
+  :ORG: Microsoft Corporation
+  :EMAIL: deriks@microsoft.com (INTERNET)
+  :END:
+* Anik Ganguly
+  :PROPERTIES:
+  :PHONE: +1-734-542-5955 (WORK, MSG)
+  :ADDRESS: 38777 West Six Mile Road, 48152 Livonia, MI, USA, Suite 101 (WORK, POSTAL, PARCEL)
+  :ORG:  Open Text Inc.
+  :N: Ganguly;Anik;;;
+  :EMAIL: ganguly@acm.org (INTERNET)
+  :END:
+* Robert Moskowitz
+  :PROPERTIES:
+  :EMAIL: rgm-ietf@htt-consult.com (INTERNET)
+  :N: Moskowitz;Robert;;;
+  :END:
+#+END_SRC
