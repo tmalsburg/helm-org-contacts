@@ -2,13 +2,13 @@
 #+AUTHOR: Titus von der Malsburg
 #+EMAIL: malsburg@posteo.de
 
-This helm source can be used to search entries stored in an org-contacts file.
+This helm source can be used to search contacts stored in org-contacts format.
 
 [[file:screenshot.png]]
 
 The screenshot shows the entries stored in the org-contacts file shown below.  This file was generated from a Vcard file using [[https://gist.github.com/tmalsburg/9747104][a simple python script]].
 
-At this time, there are actions for inserting postal addresses, email addresses, and phone numbers in the buffer where `helm-org-contacts` was called.
+At this time, there are actions for inserting postal addresses, email addresses, and phone numbers in the buffer where ~helm-org-contacts~ was called.
 
 #+BEGIN_SRC
 * Forrest Gump
