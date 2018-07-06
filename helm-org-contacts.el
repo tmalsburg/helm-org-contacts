@@ -230,7 +230,7 @@ ALIST that have PROP as the key."
   "Insert marked elements at point."
   (let ((elements (helm-marked-candidates :with-wildcard t)))
     (with-helm-current-buffer
-      (insert (s-join ", " elements))))))
+      (insert (s-join ", " elements)))))
 
 (defun helm-org-contacts-insert-email-with-name (entry)
   (let* ((emails (helm-org-contacts-alist-get-all :EMAIL (cadr entry)))
