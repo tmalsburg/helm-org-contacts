@@ -6,9 +6,7 @@ This helm source can be used to search contacts stored in org-contacts format.
 
 [[file:screenshot.png]]
 
-The screenshot shows the entries stored in the org-contacts file shown below.  This file was generated from a Vcard file using [[https://gist.github.com/tmalsburg/9747104][a simple python script]].
-
-At this time, there are actions for inserting postal addresses, email addresses, and phone numbers in the buffer where ~helm-org-contacts~ was called.
+The screenshot shows the entries stored in the org-contacts file shown below.
 
 #+BEGIN_SRC
 * Forrest Gump
@@ -50,3 +48,22 @@ At this time, there are actions for inserting postal addresses, email addresses,
   :N: Moskowitz;Robert;;;
   :END:
 #+END_SRC
+
+This file was generated from a Vcard file using [[https://gist.github.com/tmalsburg/9747104][a simple python script]].
+
+There are actions for inserting postal addresses, email addresses, and phone numbers in the buffer where ~helm-org-contacts~ was called.
+
+** Combination with ~helm-mu-contacts~
+[helm-mu-contacts](https://github.com/emacs-helm/helm-mu) lists email addresses extracted from mailboxes (via the Maildir indexer [mu](https://github.com/djcb/mu).  It's not a general contacts manager and for large mailboxes it tends to show a lot of false positives, e.g., outdated email addresses.  However, helm-mu-contacts and helm-org-contacts can be usufully combined into one helm search via the following code:
+
+#+BEGIN_SRC elisp
+;; Combine mu contacts with org contacts:
+(defun helm-contacts ()
+  (interactive)
+  (helm :sources '(helm-source-org-contacts helm-source-mu-contacts)
+        :full-frame t
+        :candidate-number-limit 500))
+#+END_SRC
+
+This way we get clean contact data from our address books and we can fall back to email addresses extracted from our mailboxes when the person in question is missing in the address book.
+
