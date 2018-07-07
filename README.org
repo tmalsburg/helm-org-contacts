@@ -54,7 +54,7 @@ This file was generated from a Vcard file using [[https://gist.github.com/tmalsb
 There are actions for inserting postal addresses, email addresses, and phone numbers in the buffer where ~helm-org-contacts~ was called.
 
 ** Combination with ~helm-mu-contacts~
-[helm-mu-contacts](https://github.com/emacs-helm/helm-mu) lists email addresses extracted from mailboxes (via the Maildir indexer [mu](https://github.com/djcb/mu).  It's not a general contacts manager and for large mailboxes it tends to show a lot of false positives, e.g., outdated email addresses.  However, helm-mu-contacts and helm-org-contacts can be usufully combined into one helm search via the following code:
+[[https://github.com/emacs-helm/helm-mu][helm-mu-contacts]] lists email addresses extracted from mailboxes (via the Maildir indexer [[https://github.com/djcb/mu][mu]]).  Helm-mu-contacts is not a general contacts manager and for large mailboxes it tends to show a lot of false positives, e.g., outdated email addresses.  However, helm-mu-contacts and helm-org-contacts can be usufully combined into one helm search via the following code:
 
 #+BEGIN_SRC elisp
 ;; Combine mu contacts with org contacts:
