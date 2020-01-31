@@ -2,6 +2,13 @@
 #+AUTHOR: Titus von der Malsburg
 #+EMAIL: malsburg@posteo.de
 
+*Note*: this project is a fork from
+https://github.com/tmalsburg/helm-org-contacts and adds following
+features:
+- added =helm-org-contacts-cache= and =helm-org-contacts-refresh-cache()=
+- added =helm-org-contacts-insert-contact-link(entry)= which inserts =[[contact:FirstLast][First Last]]=
+- some adaptations such as disabling actions I don't need/use
+
 This helm source can be used to search contacts stored in org-contacts format.
 
 [[file:screenshot.png]]
