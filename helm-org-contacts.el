@@ -54,29 +54,47 @@
 (require 'dash)
 (require 's)
 
+(defcustom helm-org-contacts-use-cache t
+  "Non-nil means cache contacts to speed up the process."
+  :type 'boolean)
+
+(defvar helm-org-contacts-cache nil
+  "Cache for entries.")
+
+(defun helm-org-contacts-refresh-cache ()
+  "Clears the contact cache and newly collects contacts"
+  (interactive)
+  (setq helm-org-contacts-cache nil)
+  (helm-org-contacts-get-contacts) "Rebuilding cache for helm-org-contacts"
+  )
+
 (defun helm-org-contacts-get-contacts ()
-  (with-current-buffer (find-file-noselect (car org-contacts-files))
-    (widen)
-    (outline-show-all)
-    (goto-char (point-min))
-    (when (not (outline-on-heading-p))
-      (outline-next-heading))
-    (cl-loop
-     while (outline-on-heading-p)
-     for fn = (s-trim
-               (replace-regexp-in-string "^\*+" "" (thing-at-point 'line t)))
-     for marker = (point-marker)
-     collect (cons (cons :FN fn)
-                   (helm-org-contacts-plist-to-alist
-                    (org-element--get-node-properties)))
-     into entries
-     collect marker into markers
-     do (outline-next-heading)
-     finally return
-     (--zip-with
-      (list (s-join " " (-map 'cdr it)) other it)
-      entries
-      markers))))
+  (if (and helm-org-contacts-cache helm-org-contacts-use-cache)
+      helm-org-contacts-cache
+    (progn
+      (setq helm-org-contacts-cache
+        (with-current-buffer (find-file-noselect (car org-contacts-files))
+          (widen)
+          (outline-show-all)
+          (goto-char (point-min))
+          (when (not (outline-on-heading-p))
+            (outline-next-heading))
+          (cl-loop
+           while (outline-on-heading-p)
+           for fn = (s-trim
+                     (replace-regexp-in-string "^\*+" "" (thing-at-point 'line t)))
+           for marker = (point-marker)
+           collect (cons (cons :FN fn)
+                         (helm-org-contacts-plist-to-alist
+                          (org-element--get-node-properties)))
+           into entries
+           collect marker into markers
+           do (outline-next-heading)
+           finally return
+           (--zip-with
+            (list (s-join " " (-map 'cdr it)) other it)
+            entries
+            markers)))))))
 
 ;; This is adapted from `json--plist-to-alist':
 (defun helm-org-contacts-plist-to-alist (plist)
