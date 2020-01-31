@@ -278,6 +278,21 @@ ALIST that have PROP as the key."
                                                     :candidates emails
                                                     :action '(("Insert email address" . helm-org-contacts-insert-emails))))))))
 
+(defun helm-org-contacts-insert-contact-link (entry)
+  (let* (
+	 (heading (cdr (assoc :FN (cadr entry))))
+	 (name (string-trim (car (split-string heading ":" t))))
+	 (nametag (car (cdr (split-string heading ":" t))))
+	 (contactlink (format "[[contact:%s][%s]] " 
+		      nametag name
+		      ))
+        )
+    (pcase (length nametag)
+      (`0 (message "No name found."))
+      (_ (with-helm-current-buffer
+            (insert contactlink)))
+      )))
+
 (defun helm-org-contacts-insert-phone-number (entry)
   (let* ((phones (helm-org-contacts-alist-get-all :PHONE (cadr entry)))
          (phones (--map (cons (helm-org-contacts-format-field it :PHONE)
