@@ -278,7 +278,8 @@ ALIST that have PROP as the key."
   (widen)
   (show-all)
   (goto-char (car entry))
-  (org-narrow-to-subtree))
+  (org-narrow-to-subtree)
+  (org-show-all))
 
 (setq helm-source-org-contacts
       '((name                           . "Contacts")
