@@ -319,7 +319,7 @@ ALIST that have PROP as the key."
         (multiline)
         (candidates                     . helm-org-contacts-get-contacts)
         (filtered-candidate-transformer . helm-org-contacts-candidate-transformer)
-        (action . (("Insert address"    . helm-org-contacts-insert-address)
+        (action . (("Insert postal address" . helm-org-contacts-insert-address)
                    ("Insert plain email address" . helm-org-contacts-insert-plain-email)
                    ("Insert email address with name" . helm-org-contacts-insert-email-with-name)
                    ("Insert phone number" . helm-org-contacts-insert-phone-number)
