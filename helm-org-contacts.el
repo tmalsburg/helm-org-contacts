@@ -54,8 +54,31 @@
 (require 'dash)
 (require 's)
 
+(defvar helm-org-contacts-cache nil
+  "Cache for entries.")
+
+(defvar helm-org-contacts-file-watch-descriptor nil
+  "Contacts file to watch.  Is set when contacts are retrieved.")
+
 (defun helm-org-contacts-get-contacts ()
-  (with-current-buffer (find-file-noselect (car org-contacts-files))
+  (let* ((file (car org-contacts-files))
+         (cached (alist-get file helm-org-contacts-cache)))
+                                        ; Remove potentially outdated watch (if file has changed):
+    (file-notify-rm-watch helm-org-contacts-file-watch-descriptor)
+                                        ; Add watch for current contacts file:
+    (setq helm-org-contacts-file-watch-descriptor
+          (file-notify-add-watch file '(change)
+           (lambda (event)
+             (when (eq (cadr event) 'changed) (setq helm-org-contacts-cache nil)))))
+                                        ; Return cached contacts or reparse:
+    (if cached cached
+      (message "Reread contacts ...")
+      (let ((contacts (helm-org-contacts-parse-contacts file)))
+        (add-to-list 'helm-org-contacts-cache (cons file contacts))
+        contacts))))
+
+(defun helm-org-contacts-parse-contacts (file)
+  (with-current-buffer (find-file-noselect file)
     (widen)
     (outline-show-all)
     (goto-char (point-min))
