@@ -51,8 +51,15 @@ The screenshot shows the entries stored in the org-contacts file shown below.
 
 This file was generated from a Vcard file using [[https://gist.github.com/tmalsburg/9747104][a simple python script]].
 
+** Install and configure
+- Place ~helm-org-contacts.el~ somewhere in the load path.
+- Add ~(require 'helm-org-contacts)~ to init files.
+- Helm-org-contacts uses the first entry in ~org-contact-files~ as the address book.  If this value changes, helm-org-contacts automatically loads the new file.
+
 ** Usage
-Call ~helm-org-contacts~ to start searching.  The following actions are available for contacts:
+Call ~M-x helm-org-contacts~ to start searching.  Alternatively bind ~helm-org-contacts~ to some key combination.
+
+The following actions are available for contacts:
 - insert postal addresses
 - insert plain email address
 - insert email address decorated with name (e.g., ~Forrest Gump <forrestgump@example.com>~)
@@ -61,7 +68,7 @@ Call ~helm-org-contacts~ to start searching.  The following actions are availabl
 - show entry (for editing)
 Contacts are cached for optimal responsiveness with large address books.  Contacts are automatically reloaded when the contacts file changes on disk.  A reload can be forced with a prefix argument, e.g., ~C-u M-x helm-org-contacts~ or ~C-u~ followed by whatever key binding is used to invoke ~helm-org-contacts~.
 
-** Combination with ~helm-mu-contacts~
+** Combine with ~helm-mu-contacts~
 [[https://github.com/emacs-helm/helm-mu][helm-mu-contacts]] lists email addresses extracted from mailboxes (via the Maildir indexer [[https://github.com/djcb/mu][mu]]).  Helm-mu-contacts is not a general contacts manager and for large mailboxes it tends to show a lot of false positives, e.g., outdated email addresses.  However, helm-mu-contacts and helm-org-contacts can be usufully combined into one helm search via the following code:
 
 #+BEGIN_SRC elisp
