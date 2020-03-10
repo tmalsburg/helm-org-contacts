@@ -304,6 +304,10 @@ ALIST that have PROP as the key."
   (show-all)
   (org-narrow-to-subtree)))
 
+(defun helm-org-contacts-insert-contact-link (entry)
+  (let ((name (alist-get :FN (cadr entry)))
+        (file (buffer-file-name (marker-buffer (car entry)))))
+    (insert (format "[[file:%s::*%s][%s]]" file name name))))
 
 (setq helm-source-org-contacts
       '((name                           . "Contacts")
@@ -314,6 +318,7 @@ ALIST that have PROP as the key."
                    ("Insert plain email address" . helm-org-contacts-insert-plain-email)
                    ("Insert email address with name" . helm-org-contacts-insert-email-with-name)
                    ("Insert phone number" . helm-org-contacts-insert-phone-number)
+                   ("Insert contact link" . helm-org-contacts-insert-contact-link)
                    ("Show entry"        . helm-org-contacts-edit-entry)))))
 
 (defun helm-org-contacts ()
