@@ -296,11 +296,14 @@ ALIST that have PROP as the key."
                                                     :action '(("Insert phone number" . helm-org-contacts-insert-emails))))))))
 
 (defun helm-org-contacts-edit-entry (entry)
-  (find-file (car org-contacts-files))
+  (let* ((marker (car entry))
+         (buffer (marker-buffer marker)))
+    (switch-to-buffer buffer)
+    (goto-char marker)
   (widen)
   (show-all)
-  (goto-char (car entry))
-  (org-narrow-to-subtree))
+  (org-narrow-to-subtree)))
+
 
 (setq helm-source-org-contacts
       '((name                           . "Contacts")
