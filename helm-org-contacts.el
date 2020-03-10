@@ -326,8 +326,16 @@ ALIST that have PROP as the key."
                    ("Insert contact link" . helm-org-contacts-insert-contact-link)
                    ("Show entry"        . helm-org-contacts-edit-entry)))))
 
-(defun helm-org-contacts ()
-  (interactive)
+(defun helm-org-contacts (&optional arg)
+  "Search entries in org-contacts.
+
+With a prefix ARG, the cache is invalidated and the contacts are
+reloaded.  Note that a forced reload should not be necessary
+since the contacts file is automatically reloaded when it changes
+on disk."
+  (interactive "P")
+  (when arg
+    (setq helm-org-contacts-cache nil))
   (helm :sources '(helm-source-org-contacts)
         :full-frame t
         :candidate-number-limit 500))
