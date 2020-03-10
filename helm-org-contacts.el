@@ -60,16 +60,21 @@
 (defvar helm-org-contacts-file-watch-descriptor nil
   "Contacts file to watch.  Is set when contacts are retrieved.")
 
+(defvar helm-org-contacts-caching t
+  "Non-nil means that contacts are cached and only reloaded when
+  the contacts file has changed on disk.")
+
 (defun helm-org-contacts-get-contacts ()
   (let* ((file (car org-contacts-files))
          (cached (alist-get file helm-org-contacts-cache)))
+    (when helm-org-contacts-caching
                                         ; Remove potentially outdated watch (if file has changed):
-    (file-notify-rm-watch helm-org-contacts-file-watch-descriptor)
+      (file-notify-rm-watch helm-org-contacts-file-watch-descriptor)
                                         ; Add watch for current contacts file:
-    (setq helm-org-contacts-file-watch-descriptor
-          (file-notify-add-watch file '(change)
-           (lambda (event)
-             (when (eq (cadr event) 'changed) (setq helm-org-contacts-cache nil)))))
+      (setq helm-org-contacts-file-watch-descriptor
+            (file-notify-add-watch file '(change)
+                                   (lambda (event)
+                                     (when (eq (cadr event) 'changed) (setq helm-org-contacts-cache nil))))))
                                         ; Return cached contacts or reparse:
     (if cached cached
       (message "Reread contacts ...")
