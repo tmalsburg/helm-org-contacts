@@ -86,8 +86,7 @@
       (outline-next-heading))
     (cl-loop
      while (outline-on-heading-p)
-     for fn = (s-trim
-               (replace-regexp-in-string "^\*+" "" (thing-at-point 'line t)))
+     for fn = (substring-no-properties (org-get-heading t t t t))
      for marker = (point-marker)
      collect (cons (cons :FN fn)
                    (helm-org-contacts-plist-to-alist
