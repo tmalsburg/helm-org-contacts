@@ -54,8 +54,36 @@
 (require 'dash)
 (require 's)
 
+(defvar helm-org-contacts-cache nil
+  "Cache for entries.")
+
+(defvar helm-org-contacts-file-watch-descriptor nil
+  "Contacts file to watch.  Is set when contacts are retrieved.")
+
+(defvar helm-org-contacts-autoreload t
+  "Non-nil means that contacts are automatically reloaded when the
+  contacts file changes on disk.")
+
 (defun helm-org-contacts-get-contacts ()
-  (with-current-buffer (find-file-noselect (car org-contacts-files))
+  (let* ((file (car org-contacts-files))
+         (cached (alist-get file helm-org-contacts-cache)))
+    (when helm-org-contacts-autoreload
+                                        ; Remove potentially outdated watch (if file has changed):
+      (file-notify-rm-watch helm-org-contacts-file-watch-descriptor)
+                                        ; Add watch for current contacts file:
+      (setq helm-org-contacts-file-watch-descriptor
+            (file-notify-add-watch file '(change)
+                                   (lambda (event)
+                                     (when (eq (cadr event) 'changed) (setq helm-org-contacts-cache nil))))))
+                                        ; Return cached contacts or reparse:
+    (if cached cached
+      (message "Reread contacts ...")
+      (let ((contacts (helm-org-contacts-parse-contacts file)))
+        (add-to-list 'helm-org-contacts-cache (cons file contacts))
+        contacts))))
+
+(defun helm-org-contacts-parse-contacts (file)
+  (with-current-buffer (find-file-noselect file)
     (widen)
     (outline-show-all)
     (goto-char (point-min))
@@ -63,8 +91,7 @@
       (outline-next-heading))
     (cl-loop
      while (outline-on-heading-p)
-     for fn = (s-trim
-               (replace-regexp-in-string "^\*+" "" (thing-at-point 'line t)))
+     for fn = (substring-no-properties (org-get-heading t t t t))
      for marker = (point-marker)
      collect (cons (cons :FN fn)
                    (helm-org-contacts-plist-to-alist
@@ -274,26 +301,43 @@ ALIST that have PROP as the key."
                                                     :action '(("Insert phone number" . helm-org-contacts-insert-emails))))))))
 
 (defun helm-org-contacts-edit-entry (entry)
-  (find-file (car org-contacts-files))
+  (let* ((marker (car entry))
+         (buffer (marker-buffer marker)))
+    (switch-to-buffer buffer)
+    (goto-char marker)
   (widen)
   (show-all)
   (goto-char (car entry))
   (org-narrow-to-subtree)
   (org-show-all))
 
+(defun helm-org-contacts-insert-contact-link (entry)
+  (let ((name (alist-get :FN (cadr entry)))
+        (file (buffer-file-name (marker-buffer (car entry)))))
+    (insert (format "[[file:%s::*%s][%s]]" file name name))))
+
 (setq helm-source-org-contacts
       '((name                           . "Contacts")
         (multiline)
         (candidates                     . helm-org-contacts-get-contacts)
         (filtered-candidate-transformer . helm-org-contacts-candidate-transformer)
-        (action . (("Insert address"    . helm-org-contacts-insert-address)
+        (action . (("Insert postal address" . helm-org-contacts-insert-address)
                    ("Insert plain email address" . helm-org-contacts-insert-plain-email)
                    ("Insert email address with name" . helm-org-contacts-insert-email-with-name)
                    ("Insert phone number" . helm-org-contacts-insert-phone-number)
+                   ("Insert contact link" . helm-org-contacts-insert-contact-link)
                    ("Show entry"        . helm-org-contacts-edit-entry)))))
 
-(defun helm-org-contacts ()
-  (interactive)
+(defun helm-org-contacts (&optional arg)
+  "Search entries in org-contacts.
+
+With a prefix ARG, the cache is invalidated and the contacts are
+reloaded.  Note that a forced reload should not be necessary
+since the contacts file is automatically reloaded when it changes
+on disk."
+  (interactive "P")
+  (when arg
+    (setq helm-org-contacts-cache nil))
   (helm :sources '(helm-source-org-contacts)
         :full-frame t
         :candidate-number-limit 500))
