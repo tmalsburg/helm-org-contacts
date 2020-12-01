@@ -307,7 +307,9 @@ ALIST that have PROP as the key."
     (goto-char marker)
   (widen)
   (show-all)
-  (org-narrow-to-subtree)))
+  (goto-char (car entry))
+  (org-narrow-to-subtree)
+  (org-show-all))
 
 (defun helm-org-contacts-insert-contact-link (entry)
   (let ((name (alist-get :FN (cadr entry)))
