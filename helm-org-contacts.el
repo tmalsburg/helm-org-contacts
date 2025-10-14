@@ -54,6 +54,17 @@
 (require 'dash)
 (require 's)
 
+(setq helm-org-contacts-org-property-separators
+      '((("PHONE" "EMAIL" "ADDRESS" "ORG") . "\x1F")))
+
+(defun helm-org-contacts-org-entry-properties (&optional epom)
+  "Like org-entry-properties but using our own org-property-separators."
+  (let ((org-property-separators helm-org-contacts-org-property-separators))
+    (seq-reduce
+     #'append
+     (--map (org-entry-properties nil it) '("ITEM" "PHONE" "EMAIL" "ADDRESS" "ORG"))
+     nil)))
+
 (defvar helm-org-contacts-cache nil
   "Cache for entries.")
 
@@ -64,7 +75,7 @@
   "Non-nil means that contacts are automatically reloaded when the
   contacts file changes on disk.")
 
-(defun helm-org-contacts-get-contacts ()
+(defun helm-org-contacts-get-contacts (&optional arg)
   (let* ((file (car org-contacts-files))
          (cached (alist-get file helm-org-contacts-cache)))
     (when helm-org-contacts-autoreload
@@ -76,7 +87,7 @@
                                    (lambda (event)
                                      (when (eq (cadr event) 'changed) (setq helm-org-contacts-cache nil))))))
                                         ; Return cached contacts or reparse:
-    (if cached cached
+    (if (and cached (not arg)) cached
       (message "Reread contacts ...")
       (let ((contacts (helm-org-contacts-parse-contacts file)))
         (add-to-list 'helm-org-contacts-cache (cons file contacts))
@@ -91,11 +102,9 @@
       (outline-next-heading))
     (cl-loop
      while (outline-on-heading-p)
-     for fn = (substring-no-properties (org-get-heading t t t t))
+     for item = (substring-no-properties (org-get-heading t t t t))
      for marker = (point-marker)
-     collect (cons (cons :FN fn)
-                   (helm-org-contacts-plist-to-alist
-                    (org-element--get-node-properties)))
+     collect (helm-org-contacts-org-entry-properties)
      into entries
      collect marker into markers
      do (outline-next-heading)
@@ -115,47 +124,50 @@
         (push (cons prop val) res)))
     res))
 
-;; TODO Show something usefule in the third column.  If org is
-;; undefined, show notes.  If org == fn, show notes, too.
+;; TODO Show something useful in the third column.  If org is
+;; undefined, show notes.  If org == item, show notes, too.
 (defun helm-org-contacts-candidate-transformer (candidates source)
   (cl-loop
    with width = (with-helm-window (helm-org-contacts-window-width))
+   with width = (- (with-helm-window (helm-org-contacts-window-width)) 2)
+   ;; with width = 117
    for entry in candidates
    for entry = (nth 2 entry)
    ;; Format fields for display:
-   for entry = (--map (cons (car it) (helm-org-contacts-format-field (cdr it) (car it))) entry)
+   ;; for entry = (--map (cons (car it) (helm-org-contacts-format-field (cdr it) (car it))) entry)
    ;; Format entry for display:
-   maximize (-max (cons 0 (-map 'length (helm-org-contacts-alist-get-all :FN entry)))) into max-fn
-   maximize (-max (cons 0 (-map 'length (helm-org-contacts-alist-get-all :PHONE entry)))) into max-phone
-   maximize (-max (cons 0 (-map 'length (helm-org-contacts-alist-get-all :EMAIL entry)))) into max-email
-   maximize (-max (cons 0 (-map 'length (helm-org-contacts-alist-get-all :ORG entry)))) into max-org
+   maximize (-max (cons 0 (-map 'length (helm-org-contacts-alist-get-all "ITEM" entry))))  into max-item
+   maximize (-max (cons 0 (-map 'length (helm-org-contacts-alist-get-all "PHONE" entry)))) into max-phone
+   maximize (-max (cons 0 (-map 'length (helm-org-contacts-alist-get-all "EMAIL" entry)))) into max-email
+   maximize (-max (cons 0 (-map 'length (helm-org-contacts-alist-get-all "ORG" entry))))   into max-org
    collect entry into entries
    finally return
    (--zip-with
-    (cons (helm-org-contacts-entry-formatter it max-fn max-phone max-email max-org width)
+    (cons (helm-org-contacts-entry-formatter it max-item max-phone max-email max-org width)
           (cdr other))
     entries
     candidates)))
 
-(defun helm-org-contacts-entry-formatter (entry max-fn max-phone max-email max-org width)
-  (let* ((phones (helm-org-contacts-alist-get-all :PHONE entry))
-         (emails (helm-org-contacts-alist-get-all :EMAIL entry))
-         (orgs   (helm-org-contacts-alist-get-all :ORG entry))
-         (fns (list (cdr (assoc :FN entry))))
-         (max-num (-max (-map 'length (list fns phones emails orgs))))
-         (fns    (append fns    (-repeat (- max-num (length fns   )) "")))
-         (phones (append phones (-repeat (- max-num (length phones)) "")))
-         (emails (append emails (-repeat (- max-num (length emails)) "")))
-         (orgs   (append orgs   (-repeat (- max-num (length orgs  )) "")))
-         (fns    (--map (truncate-string-to-width it max-fn    0 ?\s) fns))
-         (phones (--map (truncate-string-to-width it max-phone 0 ?\s) phones))
-         (emails (--map (truncate-string-to-width it max-email 0 ?\s) emails))
-         (orgs   (--map (truncate-string-to-width it max-org   0 ?\s) orgs)))
+(defun helm-org-contacts-entry-formatter (entry max-item max-phone max-email max-org width)
+  (let* ((items   (list (cdr (assoc "ITEM" entry))))
+         (phones  (helm-org-contacts-alist-get-all "PHONE" entry))
+         (phones  (helm-org-contacts-alist-get-all "PHONE" entry))
+         (emails  (helm-org-contacts-alist-get-all "EMAIL" entry))
+         (orgs    (helm-org-contacts-alist-get-all "ORG"   entry))
+         (max-num (-max (-map 'length (list items phones emails orgs))))
+         (items   (append items  (-repeat (- max-num (length items))  "")))
+         (phones  (append phones (-repeat (- max-num (length phones)) "")))
+         (emails  (append emails (-repeat (- max-num (length emails)) "")))
+         (orgs    (append orgs   (-repeat (- max-num (length orgs  )) "")))
+         (items   (--map (truncate-string-to-width it max-item  0 ?\s) items))
+         (phones  (--map (truncate-string-to-width it max-phone 0 ?\s) phones))
+         (emails  (--map (truncate-string-to-width it max-email 0 ?\s) emails))
+         (orgs    (--map (truncate-string-to-width it max-org   0 ?\s) orgs)))
     (cl-loop
-     while (> (length fns) 0)
+     while (> (length items) 0)
      collect
      (truncate-string-to-width
-      (s-join " " (list (pop fns) (pop phones) (pop emails) (pop orgs)))
+      (s-join " " (list (pop items) (pop phones) (pop emails) (pop orgs)))
       width 0 ?\s)
      into lines
      finally return (s-join "\n" lines))))
@@ -172,12 +184,16 @@
 (defun helm-org-contacts-alist-get-all (prop alist)
   "Returns a list containing the values of all entries of 
 ALIST that have PROP as the key."
-  (-map 'cdr (--filter (eq (car it) prop) alist)))
+  (if-let* ((value (alist-get prop alist nil nil #'string=)))
+      (string-split value (string ?\x1f))
+    nil))
+
+;; (helm-org-contacts-format-field ";;Keplerstraße 17;70174 Stuttgart;Germany;; (WORK);;Werastraße 101;Stuttgart;;70190;Germany (HOME)" "ADDRESS")
 
 (defun helm-org-contacts-format-field (value prop)
   (cond
    ((not value) "")
-   ((eq prop :PHONE)
+   ((string= prop "PHONE")
     (let ((parts (s-match "^\\(.+\\) *(\\(.+\\))$" value)))
       (if parts 
           (s-concat (s-trim (nth 1 parts))
@@ -196,7 +212,7 @@ ALIST that have PROP as the key."
                        (", " . ""))
                      (nth 2 parts)))
         value)))
-   ((eq prop :EMAIL)
+   ((string= prop "EMAIL")
     (let ((parts (s-match "^\\(.+\\) *(\\(.+\\))$" value)))
       (if parts 
           (s-concat (s-trim (nth 1 parts))
@@ -210,9 +226,10 @@ ALIST that have PROP as the key."
                        (", " . ""))
                      (nth 2 parts)))
         value)))
-   ((eq prop :ADDRESS)
-    (s-join "\n" (s-split " *; *" value)))
-   ((eq prop :N)
+   ((string= prop "ADDRESS")
+    (->> (s-replace-regexp " *;+ *" "\n" value)
+         (s-trim)))
+   ((string= prop "N")
     (let ((parts (s-split ";" value)))
       (s-collapse-whitespace
        (s-trim
@@ -221,7 +238,7 @@ ALIST that have PROP as the key."
                           (nth 2 parts)
                           (nth 0 parts)
                           (nth 4 parts)))))))
-   ((eq prop :ORG)
+   ((string= prop "ORG")
     (s-replace ";" ", " value))
    (t value)))
 
@@ -241,8 +258,9 @@ ALIST that have PROP as the key."
       (insert (s-join "\n\n" elements)))))
 
 (defun helm-org-contacts-insert-address (entry)
-  (let* ((addresses (helm-org-contacts-alist-get-all :ADDRESS (cadr entry)))
-         (addresses (--map (helm-org-contacts-format-field it :ADDRESS) addresses))
+  (print entry)
+  (let* ((addresses (helm-org-contacts-alist-get-all "ADDRESS" (cadr entry)))
+         (addresses (--map (helm-org-contacts-format-field it "ADDRESS") addresses))
          (addresses (--map (cons it (helm-org-contacts-remove-flags it)) addresses)))
     (pcase (length addresses)
       (`0 (message "No address found."))
@@ -260,10 +278,10 @@ ALIST that have PROP as the key."
       (insert (s-join ", " elements)))))
 
 (defun helm-org-contacts-insert-email-with-name (entry)
-  (let* ((emails (helm-org-contacts-alist-get-all :EMAIL (cadr entry)))
-         (emails (--map (cons (helm-org-contacts-format-field it :EMAIL)
+  (let* ((emails (helm-org-contacts-alist-get-all "EMAIL" (cadr entry)))
+         (emails (--map (cons (helm-org-contacts-format-field it "EMAIL")
                               (format "%s <%s>"
-                                      (cdr (assoc :FN (cadr entry)))
+                                      (cdr (assoc "ITEM" (cadr entry)))
                                       (helm-org-contacts-remove-flags it)))
                         emails)))
     (pcase (length emails)
@@ -275,8 +293,8 @@ ALIST that have PROP as the key."
                                                     :action '(("Insert email address" . helm-org-contacts-insert-emails))))))))
 
 (defun helm-org-contacts-insert-plain-email (entry)
-  (let* ((emails (helm-org-contacts-alist-get-all :EMAIL (cadr entry)))
-         (emails (--map (cons (helm-org-contacts-format-field it :EMAIL)
+  (let* ((emails (helm-org-contacts-alist-get-all "EMAIL" (cadr entry)))
+         (emails (--map (cons (helm-org-contacts-format-field it "EMAIL")
                               (helm-org-contacts-remove-flags it))
                         emails)))
     (pcase (length emails)
@@ -288,8 +306,8 @@ ALIST that have PROP as the key."
                                                     :action '(("Insert email address" . helm-org-contacts-insert-emails))))))))
 
 (defun helm-org-contacts-insert-phone-number (entry)
-  (let* ((phones (helm-org-contacts-alist-get-all :PHONE (cadr entry)))
-         (phones (--map (cons (helm-org-contacts-format-field it :PHONE)
+  (let* ((phones (helm-org-contacts-alist-get-all "PHONE" (cadr entry)))
+         (phones (--map (cons (helm-org-contacts-format-field it "PHONE")
                               (helm-org-contacts-remove-flags it))
                         phones)))
     (pcase (length phones)
@@ -312,7 +330,7 @@ ALIST that have PROP as the key."
   (org-show-all)))
 
 (defun helm-org-contacts-insert-contact-link (entry)
-  (let ((name (alist-get :FN (cadr entry)))
+  (let ((name (alist-get "ITEM" (cadr entry) nil nil #'string=))
         (file (buffer-file-name (marker-buffer (car entry)))))
     (insert (format "[[file:%s::*%s][%s]]" file name name))))
 
